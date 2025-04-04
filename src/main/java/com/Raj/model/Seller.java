@@ -1,7 +1,7 @@
 package com.Raj.model;
 
 import com.Raj.domain.AccountStatus;
-import com.Raj.domain.USER_Role;
+import com.Raj.domain.USER_ROLE;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,7 +37,7 @@ public class Seller {
 
     private String GSTIN;
 
-    private USER_Role role = USER_Role.ROLE_SELLER;
+    private USER_ROLE role = USER_ROLE.ROLE_SELLER;
 
     private boolean isEmailVerified = false;
 

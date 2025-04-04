@@ -1,6 +1,8 @@
 package com.Raj.response;
 
-import lombok.Data;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.DefaultSecurityFilterChain;
 
 public class APIResponse {
 

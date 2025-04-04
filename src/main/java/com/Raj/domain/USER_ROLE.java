@@ -1,6 +1,6 @@
 package com.Raj.domain;
 
-public enum USER_Role {
+public enum USER_ROLE {
 
     ROLE_ADMIN,
     ROLE_CUSTOMER,
