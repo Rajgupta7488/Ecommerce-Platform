@@ -3,6 +3,7 @@ package com.Raj.controller;
 
 import com.Raj.model.User;
 import com.Raj.domain.USER_ROLE;
+import com.Raj.request.LoginRequest;
 import com.Raj.response.APIResponse;
 
 import com.Raj.model.VerificationCode;
@@ -47,5 +48,15 @@ public class AuthController {
 
 
         return ResponseEntity.ok(res);
+    }
+    @PostMapping("/sent/login/signup-otp")
+    public ResponseEntity<AuthResponse> loginHandler(@RequestBody LoginRequest req) throws Exception {
+
+        AuthResponse authResponse = authService.signing(req);
+
+
+
+
+        return ResponseEntity.ok(authResponse);
     }
 }
