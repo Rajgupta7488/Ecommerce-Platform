@@ -3,8 +3,10 @@ package com.Raj.service.impl;
 import com.Raj.config.JwtProvider;
 import com.Raj.domain.USER_ROLE;
 import com.Raj.model.Cart;
+import com.Raj.model.Seller;
 import com.Raj.model.User;
 import com.Raj.model.VerificationCode;
+import com.Raj.repository.SellerRepository;
 import com.Raj.repository.UserRepository;
 import com.Raj.repository.VerificationCodeRepository;
 import com.Raj.request.LoginRequest;
@@ -34,6 +36,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
    private final UserRepository userRepository;
+   private final SellerRepository sellerRepository;
    private final PasswordEncoder passwordEncoder;
    private final CartRepository cartRepository;
    private final JwtProvider jwtProvider;
@@ -43,11 +46,26 @@ public class AuthServiceImpl implements AuthService {
    private final CustomUserServiceImpl customUserService;
 
     @Override
-    public void sentLoginOtp(String email) throws Exception {
-        String SIGNING_PREFIX="signin";
+    public void sentLoginOtp(String email,USER_ROLE role) throws Exception {
+        String SIGNING_PREFIX="signing";
+
 
         if(email.startsWith(SIGNING_PREFIX)) {
             email=email.substring(SIGNING_PREFIX.length());
+
+            if (role.equals(USER_ROLE.ROLE_SELLER)) {
+                Seller seller= sellerRepository . findByEmail(email);
+                if(seller==null){
+                    throw new Exception("Seller not found with email");
+                }
+            }
+            else {
+                System.out.println("email"+email);
+                User user = userRepository.findByEmail(email);
+                if(user==null){
+                    throw new Exception("User not found with email");
+                }
+            }
 
             User user = userRepository.findByEmail(email);
             if(user==null){
@@ -110,7 +128,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse signing(LoginRequest req) {
+    public AuthResponse signing(LoginRequest req) throws Exception {
 
         String username = req.getEmail();
         String otp = req.getOtp();
@@ -133,8 +151,14 @@ public class AuthServiceImpl implements AuthService {
         return authResponse;
     }
 
-    private Authentication authenticate(String username, String otp) {
+    private Authentication authenticate(String username, String otp) throws Exception {
         UserDetails userDetails =  customUserService.loadUserByUsername(username);
+
+        String SELLER_PREFIX="seller_";
+        if(username.startsWith(SELLER_PREFIX)) {
+            username=username . substring (SELLER_PREFIX. length ( ) ) ;
+
+        }
 
         if(userDetails==null){
             throw new BadCredentialsException("invalid username");
@@ -142,7 +166,7 @@ public class AuthServiceImpl implements AuthService {
         }
         VerificationCode verificationCode=verificationCodeRepository.findByEmail(username);
         if (verificationCode==null || !verificationCode.getOtp().equals(otp)){
-            throw new BadCredentialsException("wrong otp");
+            throw new Exception("wrong otp");
         }
         return new UsernamePasswordAuthenticationToken(username,null,userDetails.getAuthorities());
     }

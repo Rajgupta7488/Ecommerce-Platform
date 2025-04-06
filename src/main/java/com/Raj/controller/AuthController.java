@@ -3,6 +3,7 @@ package com.Raj.controller;
 
 import com.Raj.model.User;
 import com.Raj.domain.USER_ROLE;
+import com.Raj.request.LoginOtpRequest;
 import com.Raj.request.LoginRequest;
 import com.Raj.response.APIResponse;
 
@@ -39,9 +40,9 @@ public class AuthController {
     }
 
     @PostMapping("/sent/login/signup-otp")
-    public ResponseEntity<APIResponse> sentOtpHandler(@RequestBody VerificationCode req) throws Exception {
+    public ResponseEntity<APIResponse> sentOtpHandler(@RequestBody LoginOtpRequest req) throws Exception {
 
-        authService.sentLoginOtp(req.getEmail());
+        authService.sentLoginOtp(req.getEmail(),req.getRole());
 
         APIResponse res = new APIResponse();
         res.setMessage("otp sent  successfully");
