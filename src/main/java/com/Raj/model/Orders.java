@@ -1,6 +1,7 @@
 package com.Raj.model;
 
 import com.Raj.domain.AccountStatus;
+import com.Raj.domain.OrderStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 
@@ -44,7 +45,8 @@ public class Orders {
     private double totalSellingPrice;
 
     private Integer discount;
-    private orderstatus orderStatus;
+
+    private OrderStatus orderStatus;
 
     private int totalItem;
 

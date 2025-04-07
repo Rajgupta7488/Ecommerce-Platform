@@ -9,6 +9,9 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -81,7 +84,7 @@ public class ProductServiceImpl  implements com.Raj.service.ProductService{
     }
 
     @Override
-    public void deleteProduct(Long productId) {
+    public void deleteProduct(Long productId) throws ProductException {
 
         Product product = findProductById(productId);
         productRepository.delete(product);
@@ -89,7 +92,7 @@ public class ProductServiceImpl  implements com.Raj.service.ProductService{
     }
 
     @Override
-    public Product updateProduct(Long productId, Product product) {
+    public Product updateProduct(Long productId, Product product) throws ProductException {
         findProductById(productId);
         product.setId(productId);
 
@@ -97,14 +100,14 @@ public class ProductServiceImpl  implements com.Raj.service.ProductService{
     }
 
     @Override
-    public Product findProductById(Long productId) {
+    public Product findProductById(Long productId) throws ProductException {
         return productRepository.findById(productId).orElseThrow(()->
                 new ProductException("product not found"+productId));
         }
 
     @Override
     public List<Product> searchProducts(String query) {
-        return List.of();
+        return productRepository.searchProduct(query);
     }
 
     @Override
@@ -124,36 +127,48 @@ public class ProductServiceImpl  implements com.Raj.service.ProductService{
                         colors));
 
             }
-
-            if (sizes != null && ! sizes.isEmpty()) {
-            predicates . add (criteriaBuilder. equal(root. get("size") ,
-            sizes));
-        }
+            if (sizes != null && !sizes.isEmpty()) {
+                predicates.add(criteriaBuilder.equal(root.get("size"),
+                        sizes));
+            }
             if (minPrice != null) {
-                predicates.add (criteriaBuilder.greaterThanOrEqualTo(root. get("selling price") ,
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("selling price"),
                         minPrice));
             }
             if (maxPrice != null) {
-                predicates.add (criteriaBuilder.lessThanOrEqualTo(root. get("selling price") ,
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("selling price"),
                         maxPrice));
             }
 
             if (minDiscount != null) {
-                predicates.add (criteriaBuilder.greaterThanOrEqualTo(root. get("Discount percentage") ,
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("Discount percentage"),
                         minDiscount));
             }
 
             if (stock != null) {
-                predicates.add (criteriaBuilder.equal(root. get("stock") ,
+                predicates.add(criteriaBuilder.equal(root.get("stock"),
                         stock));
             }
 
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        Pageable pageable;
+        if (sort!=null && !sort.isEmpty()) {
+            pageable = switch (sort) {
+                case "price_low" ->
+                        PageRequest.of(pageNumber != null ? pageNumber : 0, 10, Sort.by("sellingPrice").ascending());
+                case "price_high" ->
+                        PageRequest.of(pageNumber != null ? pageNumber : 0, 10, Sort.by("sellingPrice").descending());
+                default -> PageRequest.of(pageNumber != null ? pageNumber : 0, 10, Sort.unsorted());
+            };
+        }
+        else {
+            pageable = PageRequest.of(pageNumber != null ? pageNumber : 0, 10, Sort.unsorted());
+        }
+        return productRepository.findAll(spec,pageable);
 
 
-
-
-        return null;
-    }
+        }
 
     @Override
     public List<Product> getProductsBySellerId(Long sellerId) {
