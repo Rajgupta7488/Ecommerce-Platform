@@ -33,15 +33,15 @@ public class SellerProductController {
     }
 
     @PostMapping()
-    public ResponseEntity<List<Product>> createProduct(
+    public ResponseEntity<Product> createProduct(
             @RequestBody CreateProductRequest request,
 
             @RequestHeader("Authorization")String jwt)
             throws Exception {
         Seller seller= sellerService. getSellerProfile(jwt) ;
 
-        List<Product> products = productService . createProduct (,request,seller) ;
-        return new ResponseEntity<>(products, HttpStatus.CREATED);
+        Product product = productService.createProduct(request,seller);
+        return new ResponseEntity<>(product, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{productId}")

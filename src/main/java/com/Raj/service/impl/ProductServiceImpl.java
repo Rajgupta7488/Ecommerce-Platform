@@ -27,7 +27,7 @@ public class ProductServiceImpl  implements com.Raj.service.ProductService{
 
     @Override
     public Product createProduct(CreateProductRequest req, Seller seller) {
-        Category category1=categoryRepository.findByCategoryId(req. getCategory();
+        Category category1=categoryRepository.findByCategoryId(req. getCategory());
 
         if(category1 == null) {
             Category category = new Category();
@@ -111,8 +111,11 @@ public class ProductServiceImpl  implements com.Raj.service.ProductService{
     }
 
     @Override
-    public Page<Product> getAllProducts(String category, String brand, String colors, String sizes, Integer minPrice, Integer maxPrice, Integer minDiscount, String sort, String stock, Integer pageNumber) {
-        Specification<Product> spec = (root,query,criteriaBuilder) ->
+    public Page<Product> getAllProducts(String category, String brand, String colors,
+                                        String sizes, Integer minPrice,
+                                        Integer maxPrice, Integer minDiscount,
+                                        String sort, String stock, Integer pageNumber) {
+        Specification<Product> spec = (root,Query,criteriaBuilder) ->
         {
             List<Predicate> predicates = new ArrayList<>();
 

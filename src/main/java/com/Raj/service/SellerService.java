@@ -18,5 +18,6 @@ public interface SellerService {
     Seller verifyEmail(String email,String otp) throws Exception;
     Seller updateAccountStatus(Long sellerId,AccountStatus status) throws Exception;
 
-    
+
+
 }

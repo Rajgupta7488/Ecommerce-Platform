@@ -48,6 +48,6 @@ else throw new Exception("you can't delete this item");
     @Override
     public CartItem findCartItemById(Long id) throws Exception {
         return cartItemRepository.findById(id).orElseThrow(()->
-                new Exception("cart it not found "+id) ;
+                new Exception("cart it not found "+id));
     }
 }

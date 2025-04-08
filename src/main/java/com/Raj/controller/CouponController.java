@@ -15,9 +15,8 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
-
-public class AdminCouponController {
+@RequestMapping("/api/coupons")
+public class CouponController {
 
     private final CouponService couponService;
     private final UserService userService;
@@ -41,32 +40,33 @@ public class AdminCouponController {
 
         return ResponseEntity.ok(cart);
     }
+}
 
-    @RestController
-    @RequestMapping("/admin")
-    public class AdminCouponController {
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/admin")
+class AdminCouponController {
 
-        @PostMapping("/create")
-        public ResponseEntity<Coupon> createCoupon(@RequestBody Coupon coupon) {
-            Coupon createdCoupon = couponService.createCoupon(coupon);
-            return ResponseEntity.ok(createdCoupon);
-        }
+    private final CouponService couponService;
 
-        @DeleteMapping("/delete/{id}")
-        public ResponseEntity<APIResponse> deleteCoupon(@PathVariable Long id) throws Exception {
-            couponService.deleteCoupon(id);
-            APIResponse response = new APIResponse();
-            response.setMessage("Coupon deleted successfully");
-            response.setStatus(true);
-            return ResponseEntity.ok(response);
-        }
-
-        @GetMapping("/all")
-        public ResponseEntity<List<Coupon>> getAllCoupons() {
-            List<Coupon> coupons = couponService.findAllCoupons();
-            return ResponseEntity.ok(coupons);
-        }
+    @PostMapping("/create")
+    public ResponseEntity<Coupon> createCoupon(@RequestBody Coupon coupon) {
+        Coupon createdCoupon = couponService.createCoupon(coupon);
+        return ResponseEntity.ok(createdCoupon);
     }
 
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<APIResponse> deleteCoupon(@PathVariable Long id) throws Exception {
+        couponService.deleteCoupon(id);
+        APIResponse response = new APIResponse();
+        response.setMessage("Coupon deleted successfully");
+        response.setSuccess(true);
+        return ResponseEntity.ok(response);
+    }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<Coupon>> getAllCoupons() {
+        List<Coupon> coupons = couponService.findAllCoupons();
+        return ResponseEntity.ok(coupons);
+    }
 }

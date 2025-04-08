@@ -1,6 +1,5 @@
 package com.Raj.service.impl;
 
-
 import com.Raj.domain.PaymentOrderStatus;
 import com.Raj.domain.AccountStatus.PaymentStatus;
 import com.Raj.model.Orders;
@@ -22,27 +21,29 @@ import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
-
 import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-public class PaymentServiceImpl  implements PaymentService {
+public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentOrderRepository paymentOrderRepository;
     private final OrderRepository orderRepository;
 
-    private String APIKey = "APIKey";
-    private String APISecret = "APISecret";
-    private String stripeSecretKey = "stripesecretKey";
+    @Value("${razorpay.api.key}")
+    private String APIKey;
 
+    @Value("${razorpay.api.secret}")
+    private String APISecret;
 
-
+    @Value("${stripe.secret.key}")
+    private String stripeSecretKey;
 
     @Override
     public PaymentOrder createOrder(User user, Set<Orders> orders) {
+        // Fix the method reference issue by explicitly using a lambda expression
         Long amount = orders.stream()
-                .mapToLong(Orders::getTotalSellingPrice)
+                .mapToLong(order -> (long) order.getTotalSellingPrice())
                 .sum();
 
         PaymentOrder paymentOrder = new PaymentOrder();
@@ -51,15 +52,14 @@ public class PaymentServiceImpl  implements PaymentService {
         paymentOrder.setOrders(orders);
 
         return paymentOrderRepository.save(paymentOrder);
-
     }
 
     @Override
     public PaymentOrder getPaymentOrderById(Long orderId) throws Exception {
         return paymentOrderRepository.findById(orderId)
                 .orElseThrow(() -> new Exception("Payment order not found"));
-
     }
+
     @Override
     public PaymentOrder getPaymentOrderByPaymentId(String orderId) throws Exception {
         PaymentOrder paymentOrder = paymentOrderRepository.findByPaymentLinkId(orderId);
@@ -89,6 +89,7 @@ public class PaymentServiceImpl  implements PaymentService {
                 }
 
                 paymentOrder.setStatus(PaymentOrderStatus.SUCCESS);
+                paymentOrder.setPaymentLinkId(paymentLinkId);
                 paymentOrderRepository.save(paymentOrder);
 
                 return true;
@@ -101,6 +102,25 @@ public class PaymentServiceImpl  implements PaymentService {
         return false;
     }
 
+    // Extracted method for creating payment link request
+    private JSONObject createPaymentLinkRequest(User user, Long amount) {
+        JSONObject paymentLinkRequest = new JSONObject();
+        paymentLinkRequest.put("amount", amount);
+        paymentLinkRequest.put("currency", "INR");
+
+        JSONObject customer = new JSONObject();
+        customer.put("name", user.getFullName());
+        customer.put("email", user.getEmail());
+
+        paymentLinkRequest.put("customer", customer);
+
+        JSONObject notify = new JSONObject();
+        notify.put("email", true);
+
+        paymentLinkRequest.put("notify", notify);
+
+        return paymentLinkRequest;
+    }
 
     @Override
     public PaymentLink createRazorpayPaymentLink(User user, Long amount, Long orderId) throws RazorpayException {
@@ -108,32 +128,22 @@ public class PaymentServiceImpl  implements PaymentService {
         try {
             RazorpayClient razorpay = new RazorpayClient(APIKey, APISecret);
 
-            JSONObject paymentLinkRequest = new JSONObject();
-            paymentLinkRequest.put("amount", amount);
-            paymentLinkRequest.put("currency", "INR");
-
-            JSONObject customer = new JSONObject();
-            customer.put("name", user.getFullName());
-            customer.put("email", user.getEmail());
-
-            paymentLinkRequest.put("customer", customer);
-
-            JSONObject notify = new JSONObject();
-            notify.put("email", true);
-
-            paymentLinkRequest.put("notify", notify);
-
+            // Use the extracted method
+            JSONObject paymentLinkRequest = createPaymentLinkRequest(user, amount);
             PaymentLink paymentLink = razorpay.paymentLink.create(paymentLinkRequest);
 
-            String paymentLinkUrl = paymentLink.get("short_url");
-            String paymentLinkId = paymentLink.get("id");
-            return paymentLink;
+            // Get the payment order and update it with the payment link ID
+            PaymentOrder paymentOrder = paymentOrderRepository.findById(orderId)
+                    .orElseThrow(() -> new RazorpayException("Payment order not found"));
 
+            String paymentLinkId = paymentLink.get("id");
+            paymentOrder.setPaymentLinkId(paymentLinkId);
+            paymentOrderRepository.save(paymentOrder);
+
+            return paymentLink;
         } catch (Exception e) {
             System.out.println(e.getMessage());
             throw new RazorpayException(e.getMessage());
-
-
         }
     }
 
@@ -166,9 +176,16 @@ public class PaymentServiceImpl  implements PaymentService {
 
         try {
             Session session = Session.create(params);
+
+            // Get the payment order and update it with session ID as payment link ID
+            PaymentOrder paymentOrder = paymentOrderRepository.findById(orderId)
+                    .orElseThrow(() -> new RuntimeException("Payment order not found"));
+            paymentOrder.setPaymentLinkId(session.getId());
+            paymentOrderRepository.save(paymentOrder);
+
             return session.getUrl();
         } catch (StripeException e) {
             throw new RuntimeException("Failed to create Stripe payment session", e);
         }
-
-
+    }
+}
